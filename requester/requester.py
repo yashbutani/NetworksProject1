@@ -13,19 +13,24 @@ def main():
     total_packets_received = 0
     total_bytes_received = 0
     start_time = time.time()
+    sender_ip = 'localhost'
+
 
     # Set up the UDP socket
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind(("", args.port))
+        # s.bind(("", 5001))
+        # message = "Hello, Sender!"  # The data/message you want to send
+        # s.sendto(message.encode(), (sender_ip, 5000))
+        # print(f"Sent message to {sender_ip}:{5000}")
 
-        # Request file
+        s.bind(("", 5001))
+        # # Request file
         packet_type = b'R'
         seq_num = socket.htonl(1)
-        length = socket.htonl(24)
+        length = socket.htonl(9)
         packet = struct.pack("!cII", packet_type, seq_num, length) + args.file.encode()
-        s.sendto(packet, (socket.gethostbyname(socket.gethostname()), args.port))
-
-        print(socket.gethostbyname(socket.gethostname()))
+        print(args.port)
+        s.sendto(packet, (sender_ip, args.port))
 
         with open(args.file, "wb") as f:
             while True:
@@ -33,7 +38,9 @@ def main():
                 print(data)
                 print(addr)
                 packet_type, seq_num, length = struct.unpack("!cII", data[:9])
+                print(socket.ntohl(seq_num))
                 payload = data[9:]
+                print(payload)
 
                 # Processing the packet and printing required details
                 receipt_time = int(time.time() * 1000) % 1000  # receipt time in milliseconds

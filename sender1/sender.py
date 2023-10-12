@@ -4,7 +4,7 @@ import time
 import struct
 import os
 
-def send_file(filename, dest_addr, rate, seq_no, length):
+def send_file(s, filename, dest_addr, rate, seq_no, length):
     if not os.path.exists(filename):
         print(f"File {filename} not found!")
         return
@@ -15,12 +15,12 @@ def send_file(filename, dest_addr, rate, seq_no, length):
             if not data:
                 # Sending the END packet
                 header = struct.pack('!cII', b'E', socket.htonl(seq_no), 0)
-                sender_socket.sendto(header, dest_addr)
+                s.sendto(header, dest_addr)
                 break
             
             header = struct.pack('!cII', b'D', socket.htonl(seq_no), len(data))
             packet = header + data
-            sender_socket.sendto(packet, dest_addr)
+            s.sendto(packet, dest_addr)
 
             # Print the sender's log
             print(f"{time.time()*1000:.0f} {dest_addr[0]} {seq_no} {data[:4].decode('utf-8', 'ignore')}")
@@ -42,25 +42,32 @@ if __name__ == '__main__':
         print("Error: Port number must be in the range 2050 to 65535.")
         exit(1)
 
-    host = "localhost"
-    sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #sender_socket.bind((host, args.p))
-    sender_socket.bind(('0.0.0.0', args.p))
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        host = "localhost"
+     #   sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((host, args.p))
+        print(args.p)
 
-    try:
-        while True:
-            # Listen for incoming request packets
-            data, addr = sender_socket.recvfrom(4096)
-            print(data)
-            print(addr)
-            packet_type, _, _ = struct.unpack('!cII', data[:9])
+        # s.bind((host, 5000))
+        # print(f"Listening on port {5000}...")
+        # data, addr = s.recvfrom(1024)
+        # print(f"Received message from {addr[0]}:{addr[1]} - {data.decode()}")
 
-            print(packet_type)
-            if packet_type == b'R':
-                requested_file = data[9:].decode()
-                send_file(requested_file, (addr[0], args.g), args.r, args.q, args.l)
 
-    except KeyboardInterrupt:
-        print("\nShutting down sender...")
-    finally:
-        sender_socket.close()
+        try:
+            while True:
+                # Listen for incoming request packets
+                data, addr = s.recvfrom(4096)
+                print(data)
+                print(addr)
+                packet_type, _, _ = struct.unpack('!cII', data[:9])
+
+                print(packet_type)
+                if packet_type == b'R':
+                    requested_file = data[9:].decode()
+                    send_file(s, requested_file, (addr[0], args.g), args.r, args.q, args.l)
+
+        except KeyboardInterrupt:
+            print("\nShutting down sender...")
+        finally:
+            s.close()
