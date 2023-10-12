@@ -43,13 +43,22 @@ def main():
     start_time = time.time()
 
 
-    # Set up the UDP socket
+    
 
-    # TODO be able to receive 2+ packet concurrently if same sequence number
+    # TODO be able to receive 2+ packets concurrently if same sequence number
+    #  currently in a linear flow model
+    #  data packet from sender 1 -> end packet from sender 1 -> Summary2
+    #  -> data packet from sender2 -> end packet from sender2 -> Summary2
+    # 
+    # IDEAS:
+    # - setup threads for multiple packets to be accepted from senders (2 while loops below running concurrently)
+    # - sequence numbers determine order of packets (if same # accept at same time)
+
+    # Set up the UDP socket
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(("", args.port))
 
-        for tracker in tracker_arr:
+        for tracker in tracker_arr: # if sequence number the same in the array create threads to run below while loop at the same time
             packet_type = b'R'
             seq_num = socket.htonl(0)
             length = socket.htonl(0)
