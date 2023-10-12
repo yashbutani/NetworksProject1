@@ -42,18 +42,24 @@ if __name__ == '__main__':
         print("Error: Port number must be in the range 2050 to 65535.")
         exit(1)
 
+    host = "localhost"
     sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #sender_socket.bind((host, args.p))
     sender_socket.bind(('0.0.0.0', args.p))
 
     try:
         while True:
             # Listen for incoming request packets
             data, addr = sender_socket.recvfrom(4096)
+            print(data)
+            print(addr)
             packet_type, _, _ = struct.unpack('!cII', data[:9])
 
+            print(packet_type)
             if packet_type == b'R':
                 requested_file = data[9:].decode()
                 send_file(requested_file, (addr[0], args.g), args.r, args.q, args.l)
+
     except KeyboardInterrupt:
         print("\nShutting down sender...")
     finally:

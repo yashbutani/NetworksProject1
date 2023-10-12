@@ -20,21 +20,26 @@ def main():
 
         # Request file
         packet_type = b'R'
-        seq_num = socket.htonl(0)
-        length = socket.htonl(0)
+        seq_num = socket.htonl(1)
+        length = socket.htonl(24)
         packet = struct.pack("!cII", packet_type, seq_num, length) + args.file.encode()
         s.sendto(packet, (socket.gethostbyname(socket.gethostname()), args.port))
+
+        print(socket.gethostbyname(socket.gethostname()))
 
         with open(args.file, "wb") as f:
             while True:
                 data, addr = s.recvfrom(65535)  # maximum UDP packet size
+                print(data)
+                print(addr)
                 packet_type, seq_num, length = struct.unpack("!cII", data[:9])
                 payload = data[9:]
 
                 # Processing the packet and printing required details
                 receipt_time = int(time.time() * 1000) % 1000  # receipt time in milliseconds
                 print(f"{receipt_time}, {addr[0]}:{addr[1]}, {socket.ntohl(seq_num)}, {socket.ntohl(length)}, {payload[:4]}")
-
+                print("hello")
+                print(packet_type)
                 if packet_type == b'D':
                     total_packets_received += 1
                     total_bytes_received += len(payload)
@@ -53,6 +58,7 @@ def main():
                     total_packets_received = 0
                     total_bytes_received = 0
                     start_time = time.time()
+                print("h")
 
 if __name__ == "__main__":
     main()
