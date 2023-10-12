@@ -3,8 +3,11 @@ import socket
 import time
 import struct
 import os
+from datetime import datetime
 
 def send_file(s, filename, dest_addr, rate, seq_no, length):
+    address = f"{dest_addr[0]}:{dest_addr[1]}"
+
     if not os.path.exists(filename):
         print(f"File {filename} not found!")
         return
@@ -12,20 +15,23 @@ def send_file(s, filename, dest_addr, rate, seq_no, length):
     with open(filename, 'rb') as file:
         while True:
             data = file.read(length)
-            print(data)
             if not data:
-                print("end packet send")
+                print("\nEND Packet")
                 # Sending the END packet
                 header = struct.pack('!cII', b'E', socket.htonl(seq_no), 0)
                 s.sendto(header, dest_addr)
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                print(f"send time:\t{current_time}\nrequester addr:\t{address}\nSequence num::\t{seq_no}\nlength:\t\t0\npayload:\t\n")
                 break
             
             header = struct.pack('!cII', b'D', socket.htonl(seq_no), len(data))
             packet = header + data
             s.sendto(packet, dest_addr)
-
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            print("DATA Packet")
             # Print the sender's log
-            print(f"{time.time()*1000:.0f} {dest_addr[0]} {seq_no} {data.decode('utf-8', 'ignore')}")
+            # project spec says to only print out first 4 bytes
+            print(f"send time:\t{current_time}\nrequester addr:\t{address}\nSequence num::\t{seq_no}\nlength:\t\t{len(data)}\npayload:\t{data[:4].decode('utf-8', 'ignore')}")
             
             seq_no += len(data)
             time.sleep(1.0/rate)
@@ -46,18 +52,16 @@ if __name__ == '__main__':
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(('0.0.0.0', args.p))
-        print(args.p)
+        print('----------------------------')
+        print("sender 2's print information:")
 
 
         try:
             while True:
                 # Listen for incoming request packets
                 data, addr = s.recvfrom(4096)
-                print(data)
-                print(addr)
                 packet_type, _, _ = struct.unpack('!cII', data[:9])
 
-                print(packet_type)
                 if packet_type == b'R':
                     requested_file = data[9:].decode()
                     send_file(s, requested_file, (addr[0], args.g), args.r, args.q, args.l)
