@@ -12,7 +12,9 @@ def send_file(s, filename, dest_addr, rate, seq_no, length):
     with open(filename, 'rb') as file:
         while True:
             data = file.read(length)
+            print(data)
             if not data:
+                print("end packet send")
                 # Sending the END packet
                 header = struct.pack('!cII', b'E', socket.htonl(seq_no), 0)
                 s.sendto(header, dest_addr)
@@ -23,7 +25,7 @@ def send_file(s, filename, dest_addr, rate, seq_no, length):
             s.sendto(packet, dest_addr)
 
             # Print the sender's log
-            print(f"{time.time()*1000:.0f} {dest_addr[0]} {seq_no} {data[:4].decode('utf-8', 'ignore')}")
+            print(f"{time.time()*1000:.0f} {dest_addr[0]} {seq_no} {data.decode('utf-8', 'ignore')}")
             
             seq_no += len(data)
             time.sleep(1.0/rate)
@@ -43,16 +45,8 @@ if __name__ == '__main__':
         exit(1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        host = "localhost"
-     #   sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind((host, args.p))
+        s.bind(('0.0.0.0', args.p))
         print(args.p)
-
-        # s.bind((host, 5000))
-        # print(f"Listening on port {5000}...")
-        # data, addr = s.recvfrom(1024)
-        # print(f"Received message from {addr[0]}:{addr[1]} - {data.decode()}")
-
 
         try:
             while True:

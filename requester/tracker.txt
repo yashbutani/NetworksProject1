@@ -1,7 +1,2 @@
-file1.txt 2 mumble-01 5000
-
-file2.txt 1 localhost 5000
-
-file1.txt 1 mumble-03 6000
-
-file1.txt 3 mumble-01 7000
+split1.txt 100 0.0.0.0 5000
+split2.txt 100 0.0.0.0 5002
