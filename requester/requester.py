@@ -67,6 +67,8 @@ def handle_packets(sock, args):
             print(f"recv time:\t{current_time}")
             print(f"sender addr:\t{sender_addr}")
             print(f"Sequence num:\t{seq_num}")
+            print(f"length:\t{length}")
+            print(f"payload:\t{len(payload)}")
 
             # Calculate and print summary statistics here
             stats = sender_stats[key]
