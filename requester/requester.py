@@ -29,6 +29,7 @@ def handle_packets(sock, args):
     total_packets_received = 0
     total_bytes_received = 0
     start_time = time.time()
+    sender_stats = {}
 
     while True:
         data, addr = sock.recvfrom(65535)  # maximum UDP packet size
@@ -37,10 +38,21 @@ def handle_packets(sock, args):
         
         # Convert seq_num from network byte order to host byte order
         seq_num = socket.ntohl(seq_num)
-        
         payload = data[9:]
 
         sender_addr = f"{addr[0]}:{addr[1]}"  # Using the actual sender's port
+        key = f"{addr[0]}:{addr[1]}"
+        
+        if key not in sender_stats: #if this is the first packet sent update the dict
+            sender_stats[key] = {
+                "sender ip address":0,
+                "sender port number": 0, 
+                "total_packets": 0,
+                "total_bytes": 0,
+                "packets per second":0,
+                "start_time": current_time,
+                "end_time": None,
+            }
 
         if packet_type == b'D':
             print("DATA Packet")
@@ -48,7 +60,7 @@ def handle_packets(sock, args):
             print(f"recv time:\t{current_time}\nsender addr:\t{sender_addr}\nSequence num:\t{seq_num}\nlength:\t\t{len(payload)}\npayload:\t{payload[:4].decode('utf-8', 'ignore')}\n")
             total_packets_received += 1
             total_bytes_received += len(payload)
-
+            sender_stats[key]["total_bytes"]+=1
             write_to_file(args.file, payload)
 
         elif packet_type == b'E':
