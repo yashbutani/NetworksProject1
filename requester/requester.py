@@ -8,9 +8,9 @@ from datetime import datetime
 class Tracker:
     def __init__(self, filename, seq_no, hostname, port):
         self.filename = filename
-        self.seq_no: int = seq_no
+        self.seq_no = seq_no
         self.hostname = hostname
-        self.port: int = port
+        self.port = port
 
 def write_to_file(file_name, payload):
     with open(file_name, 'a') as file:
@@ -21,60 +21,71 @@ def send_requests(trackers, sock, args):
         packet_type = b'R'
         seq_num = socket.htonl(0)
         length = socket.htonl(0)
-        
         packet = struct.pack("!cII", packet_type, seq_num, length) + tracker.filename.encode()
         sock.sendto(packet, (tracker.hostname, tracker.port))
 
 def handle_packets(sock, args):
-    total_packets_received = 0
-    total_bytes_received = 0
-    start_time = time.time()
     sender_stats = {}
 
     while True:
-        data, addr = sock.recvfrom(65535)  # maximum UDP packet size
+        data, addr = sock.recvfrom(65535)  # Maximum UDP packet size
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
         packet_type, seq_num, length = struct.unpack("!cII", data[:9])
-        
-        # Convert seq_num from network byte order to host byte order
-        seq_num = socket.ntohl(seq_num)
+
+        seq_num = socket.ntohl(seq_num)  # Convert seq_num from network byte order to host byte order
         payload = data[9:]
 
-        sender_addr = f"{addr[0]}:{addr[1]}"  # Using the actual sender's port
-        key = f"{addr[0]}:{addr[1]}"
-        
-        if key not in sender_stats: #if this is the first packet sent update the dict
+        sender_addr = f"{addr[0]}:{addr[1]}"
+        key = sender_addr
+
+        if key not in sender_stats:
             sender_stats[key] = {
-                "sender ip address":0,
-                "sender port number": 0, 
                 "total_packets": 0,
                 "total_bytes": 0,
-                "packets per second":0,
                 "start_time": current_time,
-                "end_time": None,
+                "sender": sender_addr,
             }
 
         if packet_type == b'D':
-            print("DATA Packet")
-            # Print the sequence number as well
-            print(f"recv time:\t{current_time}\nsender addr:\t{sender_addr}\nSequence num:\t{seq_num}\nlength:\t\t{len(payload)}\npayload:\t{payload[:4].decode('utf-8', 'ignore')}\n")
-            total_packets_received += 1
-            total_bytes_received += len(payload)
-            sender_stats[key]["total_bytes"]+=1
+            # Print details for the data packet
+            print(f"\nDATA Packet")
+            print(f"recv time:\t{current_time}")
+            print(f"sender addr:\t{sender_addr}")
+            print(f"Sequence num:\t{seq_num}")
+            print(f"length:\t\t{len(payload)}")
+            print(f"payload:\t{payload[:4].decode('utf-8', 'ignore')}")  # Print only first few bytes of the payload
+            
+            # Update stats for the sender
+            sender_stats[key]["total_packets"] += 1
+            sender_stats[key]["total_bytes"] += len(payload)
+
+            # Here you would handle the data, e.g., writing it to a file
             write_to_file(args.file, payload)
 
         elif packet_type == b'E':
-            print("END Packet")
-            # Print the sequence number for the END packet as well
-            print(f"recv time:\t{current_time}\nsender addr:\t{sender_addr}\nSequence num:\t{seq_num}\nlength:\t\t0\npayload:\t0")
+            print("\nEND Packet")
+            print(f"recv time:\t{current_time}")
+            print(f"sender addr:\t{sender_addr}")
+            print(f"Sequence num:\t{seq_num}")
 
+            # Calculate and print summary statistics here
+            stats = sender_stats[key]
             end_time = time.time()
-            duration = end_time - start_time
-            duration_ms = duration * 1000
+            duration = end_time - time.mktime(datetime.strptime(stats["start_time"], '%Y-%m-%d %H:%M:%S.%f').timetuple())
+            packets_per_second = stats["total_packets"] / duration if duration > 0 else 0
 
-            print(f"\nSummary\nsender addr:\t\t{sender_addr}\nTotal Data packets:\t{total_packets_received}\nTotal Data bytes:\t{total_bytes_received}\nAverage packets/second:\t{round(total_packets_received / duration)}\nDuration of the test:\t{duration_ms:.2f} ms\n")
-            
-            break  # Assuming one 'END' packet ends the session. Adjust if needed.
+            print(f"\nSummary for {sender_addr}")
+            print(f"Total Data packets: {stats['total_packets']}")
+            print(f"Total Data bytes: {stats['total_bytes']}")
+            print(f"Start time: {stats['start_time']}")
+            print(f"End time: {current_time}")
+            print(f"Duration of the test: {duration:.2f} seconds")
+            print(f"Data packets/second: {packets_per_second:.2f}\n")
+
+            del sender_stats[key]  # End of session for this sender
+
+        if not sender_stats:
+            break  # No more active senders, exit the loop
 
 def main():
     tracker_arr = []
