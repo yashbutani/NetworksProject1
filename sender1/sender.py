@@ -30,7 +30,7 @@ def send_file(s, filename, dest_addr, rate, seq_no, length):
             current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
             # Print the sender's log
-            print("DATA Packet")
+            print("\nDATA Packet")
             print(f"send time:\t{current_time}\nrequester addr:\t{address}\nSequence num::\t{seq_no}\nlength:\t\t{len(data)}\npayload:\t{data[:4].decode('utf-8', 'ignore')}")
             
             seq_no += len(data)

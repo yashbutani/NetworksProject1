@@ -11,3 +11,5 @@ This is split2.txt. This is split2.txt. *This is split1.txt.
 *
 *This is sThis is split2.txt. plit1.txt.
 *
+*This is sThis is spplit1.txt.lit2.txt. 
+*
