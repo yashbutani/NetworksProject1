@@ -62,6 +62,7 @@ if __name__ == '__main__':
                 packet_type, _, _ = struct.unpack('!cII', data[:9])
                 if packet_type == b'R':
                     requested_file = data[9:].decode()
+                    print('file',requested_file)
                     send_file(s, requested_file, (addr[0], args.g), args.r, args.q, args.l)
 
         except KeyboardInterrupt:
