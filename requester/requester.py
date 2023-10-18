@@ -27,6 +27,9 @@ def send_requests(trackers, sock, args):
         packet = struct.pack("!cII", packet_type, seq_num, length) + tracker.filename.encode()
         sock.sendto(packet, (tracker.hostname, tracker.port))
 
+        # Handling responses
+        handle_packets(sock, args)
+
 
 def handle_packets(sock, args):
     sender_stats = {}
@@ -45,6 +48,7 @@ def handle_packets(sock, args):
         sender_addr = f"{addr[0]}:{addr[1]}"
         key = sender_addr
 
+      #  data_end =False
 
         if key not in sender_stats:
             sender_stats[key] = {
@@ -68,7 +72,7 @@ def handle_packets(sock, args):
             sender_stats[key]["total_packets"] += 1
             sender_stats[key]["total_bytes"] += len(payload)
 
-
+           #if data_end != True:
             # Here you would handle the data, e.g., writing it to a file
             write_to_file(args.file, payload)
 
@@ -96,7 +100,7 @@ def handle_packets(sock, args):
             print(f"End time: {current_time}")
             print(f"Duration of the test: {duration:.2f} seconds")
             print(f"Data packets/second: {packets_per_second:.2f}\n")
-
+           # data_end =True
             break
 
 
@@ -115,12 +119,11 @@ def main():
             content = file.readlines()
             content = [line.strip() for line in content if line.strip()]  # Avoid empty lines
             content.sort(key=lambda content: content[1])
-            content = content[::-1]
             for i in content:
                 filename, seq_no, hostname, port = i.split()
                 tracker_arr.append(Tracker(filename, int(seq_no), hostname, int(port)))
 
-
+            
             print('----------------------------')
             print("Requester’s print information:")
 
@@ -135,10 +138,6 @@ def main():
 
             # Send requests in the main thread
             send_requests(tracker_arr, s, args)
-
-
-            # Handling responses
-            handle_packets(s, args)
 
 
 if __name__ == "__main__":
