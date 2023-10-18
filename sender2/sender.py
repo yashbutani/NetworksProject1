@@ -51,7 +51,7 @@ if __name__ == '__main__':
         exit(1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind(('0.0.0.0', args.p))
+        s.bind((socket.gethostname(), args.p))
         print('----------------------------')
         print("sender 2's print information:")
 

@@ -1,2 +1,4 @@
-split1.txt 100 0.0.0.0 5000
-split2.txt 100 0.0.0.0 5002
+hello.txt 1 0.0.0.0 5000
+split.txt 1 0.0.0.0 5000
+split.txt 2 0.0.0.0 5002
+split.txt 3 0.0.0.0 5003

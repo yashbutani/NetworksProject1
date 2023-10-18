@@ -28,9 +28,9 @@ def send_file(s, filename, dest_addr, rate, seq_no, length):
             packet = header + data
             s.sendto(packet, dest_addr)
             current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-
+            print("DATA Packet")
             # Print the sender's log
-            print("\nDATA Packet")
+            # project spec says to only print out first 4 bytes
             print(f"send time:\t{current_time}\nrequester addr:\t{address}\nSequence num::\t{seq_no}\nlength:\t\t{len(data)}\npayload:\t{data[:4].decode('utf-8', 'ignore')}")
             
             seq_no += len(data)
@@ -53,16 +53,17 @@ if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind((socket.gethostname(), args.p))
         print('----------------------------')
-        print("sender1's print information:")
+        print("sender 3's print information:")
+
 
         try:
             while True:
                 # Listen for incoming request packets
                 data, addr = s.recvfrom(4096)
                 packet_type, _, _ = struct.unpack('!cII', data[:9])
+
                 if packet_type == b'R':
                     requested_file = data[9:].decode()
-                    print('file',requested_file)
                     send_file(s, requested_file, (addr[0], args.g), args.r, args.q, args.l)
 
         except KeyboardInterrupt:

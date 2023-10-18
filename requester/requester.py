@@ -16,22 +16,23 @@ class Tracker:
 
 def write_to_file(file_name, payload):
     with open(file_name, 'a') as file:
-        if payload == "end":
-            file.write("\n")
-        else:
-            file.write(payload.decode())
+        # if payload == "end":
+        #     file.write("\n")
+      #  else:
+        file.write(payload.decode())
 
 
 def send_requests(trackers, sock, args):
-    for tracker in trackers:
-        packet_type = b'R'
-        seq_num = socket.htonl(0)
-        length = socket.htonl(0)
-        packet = struct.pack("!cII", packet_type, seq_num, length) + tracker.filename.encode()
-        sock.sendto(packet, (tracker.hostname, tracker.port))
+    packet_type = b'R'
+    seq_num = socket.htonl(0)
+    length = socket.htonl(0)
+    packet = struct.pack("!cII", packet_type, seq_num, length) + args.file.encode()
 
-        # Handling responses
-        handle_packets(sock, args)
+    for tracker in trackers:
+        if args.file == tracker.filename:
+            sock.sendto(packet, (tracker.hostname, tracker.port))
+            # Handling responses
+            handle_packets(sock, args)
 
 
 def handle_packets(sock, args):
@@ -103,17 +104,7 @@ def handle_packets(sock, args):
             print(f"End time: {current_time}")
             print(f"Duration of the test: {duration:.2f} seconds")
             print(f"Data packets/second: {packets_per_second:.2f}\n")
-
-            write_to_file(args.file, payload = "end")
-           # data_end =True
             break
-
-
-        #     del sender_stats[key]  # End of session for this sender
-
-
-        # if not sender_stats:
-        #     break  # No more active senders, exit the loop
 
 
 def main():
@@ -138,7 +129,7 @@ def main():
             parser.add_argument("-o", "--file", type=str, required=True, help="File to request")
             args = parser.parse_args()
 
-            s.bind(("", args.port))
+            s.bind((socket.gethostname(), args.port))
 
 
             # Send requests in the main thread
