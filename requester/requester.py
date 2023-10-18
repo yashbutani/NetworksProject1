@@ -16,7 +16,10 @@ class Tracker:
 
 def write_to_file(file_name, payload):
     with open(file_name, 'a') as file:
-        file.write(payload.decode())
+        if payload == "end":
+            file.write("\n")
+        else:
+            file.write(payload.decode())
 
 
 def send_requests(trackers, sock, args):
@@ -100,6 +103,8 @@ def handle_packets(sock, args):
             print(f"End time: {current_time}")
             print(f"Duration of the test: {duration:.2f} seconds")
             print(f"Data packets/second: {packets_per_second:.2f}\n")
+
+            write_to_file(args.file, payload = "end")
            # data_end =True
             break
 
